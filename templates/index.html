@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ResuMatch AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<h1>ResuMatch AI</h1>
+
+<form action="/compare" method="post" enctype="multipart/form-data">
+    <label>Resume (PDF/DOCX):</label>
+    <input type="file" name="resume" required><br><br>
+
+    <label>Job Description (PDF/DOCX):</label>
+    <input type="file" name="job_description" required><br><br>
+
+    <button type="submit">Compare</button>
+</form>
+
+<p>
+    Download templates:
+    <a href="/templates/resume">Resume Template</a> |
+    <a href="/templates/job-description">Job Description Template</a>
+</p>
+
+{% if analysis %}
+<h2>Overall Score: {{ analysis.overall_score }} ({{ analysis.recommendation }})</h2>
+<p>{{ analysis.summary }}</p>
+
+<h3>Comparison Matrix</h3>
+<table border="1" cellpadding="4" cellspacing="0">
+    <tr>
+        <th>Parameter</th>
+        <th>Score</th>
+        <th>Weight</th>
+        <th>Weighted Score</th>
+        <th>Rationale</th>
+        <th>Examples</th>
+    </tr>
+    {% for row in matrix %}
+    <tr>
+        <td>{{ row.parameter }}</td>
+        <td>{{ row.score }}</td>
+        <td>{{ row.weight }}</td>
+        <td>{{ row.weighted_score }}</td>
+        <td>{{ row.rationale }}</td>
+        <td>
+            <ul>
+                {% for ex in row.examples %}
+                <li>{{ ex }}</li>
+                {% endfor %}
+            </ul>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h3>Top Strengths</h3>
+<ul>
+    {% for s in analysis.strengths %}
+    <li>{{ s }}</li>
+    {% endfor %}
+</ul>
+
+<h3>Areas for Improvement</h3>
+<ul>
+    {% for i in analysis.improvements %}
+    <li>{{ i }}</li>
+    {% endfor %}
+</ul>
+
+<h3>Missing Elements</h3>
+<ul>
+    {% for m in analysis.missing_elements %}
+    <li>{{ m }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+</body>
+</html>
