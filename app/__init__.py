@@ -4,9 +4,6 @@ from flask import Flask
 from .config import Config
 from .generators.template_generator import TemplateGenerator
 
-# keep a placeholder for db so other imports don't break
-db = None
-
 def create_app():
     logging.basicConfig(level=logging.INFO)
 
