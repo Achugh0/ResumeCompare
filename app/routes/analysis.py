@@ -17,6 +17,4 @@ def run_analysis(resume_text, jd_text):
     scored = scorer.apply_weights(raw)
     matrix = scorer.to_matrix(scored)
 
-    # DB saving removed for now
-
     return render_template("index.html", analysis=scored, matrix=matrix)
