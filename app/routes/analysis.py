@@ -1,11 +1,9 @@
 from flask import Blueprint, render_template, current_app
 from ..analyzers.ai_engine import AIEngine
 from ..analyzers.scoring_engine import ScoringEngine
-from .. import db
 
 analysis_bp = Blueprint("analysis", __name__)
 
-# This route is not directly used by the browser; we call run_analysis() internally.
 @analysis_bp.route("/analysis_dummy", methods=["GET"])
 def analysis_dummy():
     return "OK"
@@ -19,7 +17,6 @@ def run_analysis(resume_text, jd_text):
     scored = scorer.apply_weights(raw)
     matrix = scorer.to_matrix(scored)
 
-    if db and db.db:
-        db.save_analysis(scored)
+    # DB saving removed for now
 
     return render_template("index.html", analysis=scored, matrix=matrix)
