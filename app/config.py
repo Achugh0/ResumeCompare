@@ -9,17 +9,6 @@ class Config:
         self.SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret")
         self.DEBUG = True
 
-        # Mongo
-        self.MONGO_HOST = os.getenv("MONGO_HOST", "localhost")
-        self.MONGO_PORT = int(os.getenv("MONGO_PORT", 27017))
-        self.MONGO_USERNAME = os.getenv("MONGO_USERNAME", "admin")
-        self.MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "resumatch2026")
-        self.MONGO_DB = os.getenv("MONGO_DB", "resumatch_db")
-        self.MONGO_URI = (
-            f"mongodb://{self.MONGO_USERNAME}:{self.MONGO_PASSWORD}"
-            f"@{self.MONGO_HOST}:{self.MONGO_PORT}/{self.MONGO_DB}?authSource=admin"
-        )
-
         # AI
         self.AI_PROVIDER = "openai"
         self.OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
@@ -38,8 +27,7 @@ class Config:
             "experience_relevance": 18,
             "education_certifications": 15,
             "keywords_density": 12,
-            "career_progr
-ession": 10,
+            "career_progression": 10,
             "industry_experience": 8,
             "project_complexity": 8,
             "cultural_fit": 4,
