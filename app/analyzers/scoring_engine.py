@@ -1,6 +1,6 @@
 class ScoringEngine:
     def __init__(self, config):
-        self.weights = config.SCORING_WEIGHTS
+        self.weights = config.get("SCORING_WEIGHTS", {})
 
     def apply_weights(self, analysis):
         total = 0.0

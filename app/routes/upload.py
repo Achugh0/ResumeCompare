@@ -36,8 +36,13 @@ def compare():
         resume_text = extract(resume_path)
         jd_text = extract(jd_path)
 
-        return run_analysis(resume_text, jd_text)
+        result = run_analysis(resume_text, jd_text)
+        
+        if result.get("_is_demo"):
+            flash("⚠️ DEMO MODE: OpenAI API unavailable (Quota/Key issue). Showing SIMULATED results.")
+            
+        return result
 
     except Exception as e:
-        flash(f"Error: {e}")
+        flash(f"An unexpected error occurred: {str(e)}")
         return redirect(url_for("upload.index"))

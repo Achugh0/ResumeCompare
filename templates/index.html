@@ -1,80 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>ResuMatch AI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResuMatch AI | Context-Aware Resume Comparison</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
-<h1>ResuMatch AI</h1>
 
-<form action="/compare" method="post" enctype="multipart/form-data">
-    <label>Resume (PDF/DOCX):</label>
-    <input type="file" name="resume" required><br><br>
+    <div class="container">
+        <div class="hero">
+            <h1>ResuMatch AI</h1>
+            <p>Intelligent text analysis matching resumes against job descriptions with context-aware scoring.</p>
+        </div>
 
-    <label>Job Description (PDF/DOCX):</label>
-    <input type="file" name="job_description" required><br><br>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul class="flashes">
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
 
-    <button type="submit">Compare</button>
-</form>
+        <form action="/compare" method="post" enctype="multipart/form-data">
+            <div class="upload-box">
+                <div class="file-group">
+                    <label>📄 Upload Resume</label>
+                    <input type="file" name="resume" required accept=".pdf,.docx">
+                </div>
 
-<p>
-    Download templates:
-    <a href="/templates/resume">Resume Template</a> |
-    <a href="/templates/job-description">Job Description Template</a>
-</p>
+                <div class="file-group">
+                    <label>💼 Job Description</label>
+                    <input type="file" name="job_description" required accept=".pdf,.docx">
+                </div>
+            </div>
 
-{% if analysis %}
-<h2>Overall Score: {{ analysis.overall_score }} ({{ analysis.recommendation }})</h2>
-<p>{{ analysis.summary }}</p>
+            <button type="submit" class="btn-primary">Analyze Compatibility</button>
+        </form>
 
-<h3>Comparison Matrix</h3>
-<table border="1" cellpadding="4" cellspacing="0">
-    <tr>
-        <th>Parameter</th>
-        <th>Score</th>
-        <th>Weight</th>
-        <th>Weighted Score</th>
-        <th>Rationale</th>
-        <th>Examples</th>
-    </tr>
-    {% for row in matrix %}
-    <tr>
-        <td>{{ row.parameter }}</td>
-        <td>{{ row.score }}</td>
-        <td>{{ row.weight }}</td>
-        <td>{{ row.weighted_score }}</td>
-        <td>{{ row.rationale }}</td>
-        <td>
+        <div class="links">
+            <p>Need a template?
+                <a href="/templates/resume">Download Resume</a> &middot;
+                <a href="/templates/job-description">Download JD</a>
+            </p>
+        </div>
+
+        {% if analysis %}
+        <div class="score-overview">
+            <h2>Overall Compatibility</h2>
+            <div class="score-circle">{{ analysis.overall_score }}%</div>
+            <span
+                class="recommendation 
+            {% if analysis.overall_score >= 70 %}rec-good{% elif analysis.overall_score >= 50 %}rec-avg{% else %}rec-bad{% endif %}">
+                {{ analysis.recommendation }}
+            </span>
+            <p style="margin-top: 15px; color: #4b5563;">{{ analysis.summary }}</p>
+        </div>
+
+        <h3>Detailed Breakdown</h3>
+        <div class="results-grid">
+            {% for row in matrix %}
+            <div class="score-card">
+                <div class="card-header">
+                    <span class="card-title">{{ row.parameter }}</span>
+                    <span class="card-score">{{ row.score }}/100</span>
+                </div>
+
+                <div class="progress-bg">
+                    <div class="progress-fill" style="width: {{ row.score }}%;"></div>
+                </div>
+
+                <p class="rationale">{{ row.rationale }}</p>
+
+                {% if row.examples %}
+                <ul class="examples-list">
+                    {% for ex in row.examples %}
+                    <li>{{ ex }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="lists-container">
+            <div class="list-box strengths">
+                <h3>✨ Key Strengths</h3>
+                <ul>
+                    {% for s in analysis.strengths %}
+                    <li>{{ s }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="list-box improvements">
+                <h3>🚀 Areas for Improvement</h3>
+                <ul>
+                    {% for i in analysis.improvements %}
+                    <li>{{ i }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="list-box" style="margin-top: 20px; border-top: 5px solid #ef4444;">
+            <h3>⚠️ Missing Keywords / Elements</h3>
             <ul>
-                {% for ex in row.examples %}
-                <li>{{ ex }}</li>
+                {% for m in analysis.missing_elements %}
+                <li>{{ m }}</li>
                 {% endfor %}
             </ul>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+        </div>
+        {% endif %}
 
-<h3>Top Strengths</h3>
-<ul>
-    {% for s in analysis.strengths %}
-    <li>{{ s }}</li>
-    {% endfor %}
-</ul>
+    </div>
 
-<h3>Areas for Improvement</h3>
-<ul>
-    {% for i in analysis.improvements %}
-    <li>{{ i }}</li>
-    {% endfor %}
-</ul>
-
-<h3>Missing Elements</h3>
-<ul>
-    {% for m in analysis.missing_elements %}
-    <li>{{ m }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
 </body>
+
 </html>
