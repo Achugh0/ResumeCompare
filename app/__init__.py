@@ -26,9 +26,11 @@ def create_app():
     from .routes.upload import upload_bp
     from .routes.analysis import analysis_bp
     from .routes.templates_routes import templates_bp
+    from .routes.improve_resume import improve_resume_bp
 
     app.register_blueprint(upload_bp)
     app.register_blueprint(analysis_bp)
     app.register_blueprint(templates_bp)
+    app.register_blueprint(improve_resume_bp)
 
     return app
