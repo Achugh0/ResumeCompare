@@ -11,3 +11,7 @@ def download_resume_template():
 def download_jd_template():
     folder = current_app.config["DOWNLOADS_FOLDER"]
     return send_from_directory(folder, "job_description_template.docx", as_attachment=True)
+@templates_bp.route("/download/<filename>")
+def download_file(filename):
+    folder = current_app.config["DOWNLOADS_FOLDER"]
+    return send_from_directory(folder, filename, as_attachment=True)

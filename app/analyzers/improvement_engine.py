@@ -116,22 +116,33 @@ Provide 3-5 high-impact, RESUME-SPECIFIC suggestions.
     
     def _generate_mock_suggestions(self, analysis_data, resume_text, jd_text):
         """
-        Generate realistic mock suggestions when API is unavailable.
+        Generate tailored mock suggestions by extracting real content from the resume.
+        Ensures the tool "listens" even when the API is offline (Quota 429).
         """
+        import re
+        
+        # Extract potential bullet points or short sentences from the resume
+        sentences = re.split(r'[•\n\r|;]', resume_text)
+        real_bullets = [s.strip() for s in sentences if len(s.strip()) > 30 and len(s.strip()) < 150]
+        
+        # Fallback if no good bullets found
+        if not real_bullets:
+            real_bullets = ["Managed key projects and improved team delivery", "Responsible for core system components"]
+            
         improvements = analysis_data.get("improvements", [])
         missing_elements = analysis_data.get("missing_elements", [])
         
         suggestions = []
         
-        # Suggestion 1: Quantify Impact
-        if any("quantif" in imp.lower() or "metric" in imp.lower() for imp in improvements):
-            suggestions.append({
-                "area": "Quantify Your Impact",
-                "what_to_change": "Add specific metrics, percentages, or numbers to demonstrate the scale and impact of your work.",
-                "before": "Managed a team and improved processes",
-                "after": "Led a cross-functional team of 8 engineers, reducing deployment time by 40% and improving system uptime to 99.9%",
-                "rationale": "Quantified achievements provide concrete evidence of your capabilities and make your contributions more memorable."
-            })
+        # Suggestion 1: Quantify Impact (Using a real bullet if possible)
+        bullet_to_improve = real_bullets[0] if len(real_bullets) > 0 else "Managed a team and improved processes"
+        suggestions.append({
+            "area": "Quantify Your Impact",
+            "what_to_change": "Add specific metrics, percentages, or numbers to this achievement to demonstrate scale.",
+            "before": bullet_to_improve,
+            "after": f"{bullet_to_improve} (e.g., 'resulting in 25% efficiency gain and $50k cost savings')",
+            "rationale": "Quantified achievements provide concrete evidence of your capabilities and make your contributions more memorable."
+        })
         
         # Suggestion 2: Add Missing Skills
         if missing_elements:
@@ -139,42 +150,36 @@ Provide 3-5 high-impact, RESUME-SPECIFIC suggestions.
             suggestions.append({
                 "area": "Incorporate Missing Keywords",
                 "what_to_change": f"Add relevant experience or skills related to: {', '.join(missing_sample)}",
-                "before": "Not present in current resume",
-                "after": f"Utilized {missing_sample[0]} to optimize workflows, collaborating with teams on {missing_sample[1] if len(missing_sample) > 1 else 'key initiatives'}",
-                "rationale": "Including job-specific keywords improves ATS compatibility and shows direct alignment with the role requirements."
+                "before": "Not clearly highlighted in current resume",
+                "after": f"Leveraged {missing_sample[0]} and {missing_sample[1] if len(missing_sample) > 1 else 'relevant tools'} to deliver project goals...",
+                "rationale": "Including job-specific keywords improves ATS compatibility and shows direct alignment with the role."
             })
         
-        # Suggestion 3: Strengthen Action Verbs
+        # Suggestion 3: Strengthen Action Verbs (Using another real bullet)
+        bullet_2 = real_bullets[min(1, len(real_bullets)-1)] if len(real_bullets) > 1 else "Worked on various software features"
         suggestions.append({
             "area": "Use Stronger Action Verbs",
-            "what_to_change": "Replace passive or weak verbs with powerful action verbs that demonstrate leadership and initiative.",
-            "before": "Was responsible for handling customer issues",
-            "after": "Resolved 200+ customer escalations monthly, achieving a 95% satisfaction rating and reducing churn by 15%",
+            "what_to_change": "Replace passive language with powerful action verbs that demonstrate leadership.",
+            "before": bullet_2,
+            "after": f"Accelerated / Spearheaded {bullet_2.lower() if bullet_2[0].islower() else bullet_2}",
             "rationale": "Strong action verbs create a more dynamic narrative and position you as a proactive contributor."
         })
         
-        # Suggestion 4: Add Context and Scope
-        suggestions.append({
-            "area": "Provide Context and Scope",
-            "what_to_change": "Include details about team size, budget, project scale, or organizational impact.",
-            "before": "Developed new features for the platform",
-            "after": "Architected and delivered 5 core features for a SaaS platform serving 50,000+ users, managing a $200K budget",
-            "rationale": "Context helps recruiters understand the magnitude of your responsibilities and the complexity of your work."
-        })
-        
-        # Suggestion 5: Highlight Relevant Certifications/Projects
-        if any("qualif" in imp.lower() or "cert" in imp.lower() for imp in improvements):
+        # Suggestion 4: Highlight Key Experience
+        if len(real_bullets) > 2:
+            bullet_3 = real_bullets[2]
             suggestions.append({
-                "area": "Add Relevant Certifications or Projects",
-                "what_to_change": "Include certifications, courses, or side projects that demonstrate continuous learning and relevant expertise.",
-                "before": "Not present in current resume",
-                "after": "Certifications: AWS Solutions Architect (2024), Kubernetes Administrator (CKA) | Open Source: Contributor to [relevant project]",
-                "rationale": "Certifications and projects validate your skills and show commitment to professional development."
+                "area": "Expand on Core Achievements",
+                "what_to_change": "Provide more context about the scale and complexity of this specific task.",
+                "before": bullet_3,
+                "after": f"{bullet_3} for a [Team Size/Scale] project, managing [specific tool/process]...",
+                "rationale": "Context helps recruiters understand the magnitude of your responsibilities."
             })
         
         return {
-            "suggestions": suggestions[:5],  # Return top 5
-            "_is_demo": True
+            "suggestions": suggestions[:4],
+            "_is_demo": True,
+            "_demo_reason": "API Quota Exceeded (429)" 
         }
     
     def create_improved_resume_text(self, resume_text, suggestions_data):

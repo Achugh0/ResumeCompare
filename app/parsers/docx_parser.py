@@ -14,6 +14,5 @@ class DOCXParser:
                 for cell in row.cells:
                     if cell.text.strip():
                         parts.append(cell.text)
-        text = " ".join(parts)
-        text = re.sub(r"\s+", " ", text)
+        text = "\n".join(parts)
         return text.strip()

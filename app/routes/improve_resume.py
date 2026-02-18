@@ -54,25 +54,22 @@ def generate_improved_resume():
         # Create output filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        # Generate file - always create .docx
-        docx_filename = f"improved_resume_{timestamp}.docx"
-        docx_path = os.path.join(cfg["DOWNLOADS_FOLDER"], docx_filename)
-        
-        print(f"[IMPROVE RESUME] Creating .docx file at: {docx_path}")
-        file_path = generator.create_docx(resume_data, docx_path)
-        
-        # Determine correct mimetype and download name
         if output_format == "pdf":
-            # User requested PDF but we're giving them .docx
-            # Change the download name to .docx and use correct mimetype
-            download_name = f"improved_resume_{timestamp}.docx"
-            mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            print(f"[IMPROVE RESUME] PDF requested but returning .docx (PDF conversion not implemented)")
+            filename = f"improved_resume_{timestamp}.pdf"
+            file_path = os.path.join(cfg["DOWNLOADS_FOLDER"], filename)
+            print(f"[IMPROVE RESUME] Creating .pdf file at: {file_path}")
+            file_path = generator.create_pdf(resume_data, file_path)
+            mimetype = 'application/pdf'
+            download_name = filename
         else:
-            download_name = os.path.basename(file_path)
+            filename = f"improved_resume_{timestamp}.docx"
+            file_path = os.path.join(cfg["DOWNLOADS_FOLDER"], filename)
+            print(f"[IMPROVE RESUME] Creating .docx file at: {file_path}")
+            file_path = generator.create_docx(resume_data, file_path)
             mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            download_name = filename
         
-        print(f"[IMPROVE RESUME] Sending file: {file_path}")
+        print(f"[IMPROVE RESUME] Sending file: {file_path} with mimetype: {mimetype}")
         
         # Return file for download
         return send_file(

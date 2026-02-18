@@ -9,5 +9,5 @@ class PDFParser:
         for page in doc:
             text += page.get_text() + "\n"
         doc.close()
-        text = re.sub(r"\s+", " ", text)
+        # Removed re.sub that was flattening text into a single line
         return text.strip()

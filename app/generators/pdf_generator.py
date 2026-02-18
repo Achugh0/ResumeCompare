@@ -6,12 +6,15 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from datetime import datetime
 
 class PDFReportGenerator:
-    @staticmethod
-    def generate(analysis, matrix, output_folder):
+    def __init__(self, config):
+        self.config = config
+        self.output_folder = config.get("DOWNLOADS_FOLDER", "downloads")
+
+    def generate_report(self, analysis, matrix):
         """Generates a PDF report from the analysis data."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"Resume_Analysis_Report_{timestamp}.pdf"
-        filepath = os.path.join(output_folder, filename)
+        filepath = os.path.join(self.output_folder, filename)
 
         doc = SimpleDocTemplate(filepath, pagesize=letter)
         styles = getSampleStyleSheet()
