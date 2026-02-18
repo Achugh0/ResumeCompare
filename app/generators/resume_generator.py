@@ -142,87 +142,131 @@ You are an expert resume writer specializing in ATS-optimized resumes.
     
     def _generate_template_resume(self, resume_text, suggestions_data):
         """
-        Generate a tailored mock resume by extracting real content from the original resume.
-        Ensures the tool "listens" even when the API is offline (Quota 429).
+        Generate a comprehensive mock resume by deeply extracting real content.
+        Ensures the "Improved Resume" reflects as much of the original as possible.
         """
         import re
         
-        # 1. Extract Contact Info
+        # 1. Basic Identity & Contact
         email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', resume_text)
         phone_match = re.search(r'(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', resume_text)
         
-        # Heuristic for Name: First non-empty line that isn't Contact Info
         lines = [l.strip() for l in resume_text.splitlines() if l.strip()]
+        
+        # Heuristic for Name
         name = "Your Name"
-        print(f"[SMART MOCK] Analyzing {len(lines)} lines for name extraction...")
-        for l in lines[:8]: # Check a bit deeper
-            # Added 'mobile' to exclusion list and added length constraint (max 50)
+        for l in lines[:10]:
             clean_l = l.lower()
-            if not any(x in clean_l for x in ['@', 'phone', 'email', 'linkedin', 'address', 'mobile', 'location']) \
-               and 2 < len(l) < 50:
+            if not any(x in clean_l for x in ['@', 'phone', 'email', 'linkedin', 'address', 'mobile', 'location', 'summary', 'proven', 'experience']) \
+               and 2 < len(l) < 40:
                 name = l
                 break
 
-        contact = {
-            "name": name,
-            "email": email_match.group(0) if email_match else "your.email@example.com",
-            "phone": phone_match.group(0) if phone_match else "+1 (555) 123-4567",
-            "location": "City, State"
+        # 2. Section Splitting
+        sections = {
+            "summary": "",
+            "experience": [],
+            "skills": {"Technical": [], "Soft Skills": []},
+            "education": [],
+            "certifications": []
         }
-
-        # 2. Extract Bullet Points for Experience
-        bullet_lines = re.split(r'[•\n\r|;]', resume_text)
-        real_bullets = [s.strip() for s in bullet_lines if len(s.strip()) > 40 and len(s.strip()) < 180]
         
-        # 3. Apply Suggestions to Mock Experience
-        suggestions = suggestions_data.get("suggestions", [])
+        current_section = None
+        current_text_block = []
         
-        # Group bullets into a mock experience entry
-        mock_achievements = []
+        # Keywords to detect section starts
+        section_keywords = {
+            "experience": ["experience", "employment", "work history", "professional history"],
+            "education": ["education", "academic", "university", "college"],
+            "skills": ["skills", "competencies", "strengths", "expertise", "expertise & skills"],
+            "certifications": ["certifications", "licenses", "courses"]
+        }
         
-        # Add a placeholder for each suggestion's "after" text
-        for sug in suggestions[:3]:
-            mock_achievements.append(sug["after"])
+        # Detect sections and split text
+        for line in lines:
+            line_lower = line.lower()
+            found_header = False
+            for section, keywords in section_keywords.items():
+                if any(kw in line_lower for kw in keywords) and len(line) < 30:
+                    current_section = section
+                    found_header = True
+                    break
             
-        # Add 1-2 real bullets if available for authenticity
-        if real_bullets:
-            mock_achievements.extend(real_bullets[:2])
-
-        experience = [
-            {
-                "title": "Professional Experience",
+            if found_header:
+                continue
+            
+            if current_section == "experience":
+                # Very simple heuristic: a line with years might be a header or end of one
+                # If we see a bullet, it's an achievement
+                is_bullet = bool(re.match(r'^[•\-\*]\s+', line))
+                if not is_bullet and (re.search(r'\d{4}', line) or len(line) < 60):
+                     # New job entry? (simple heuristic)
+                     if not sections["experience"] or sections["experience"][-1]["achievements"]:
+                        sections["experience"].append({
+                            "title": line,
+                            "company": "Organization", # We'll try to find company in next line
+                            "location": "Location",
+                            "dates": re.search(r'\d{4}.*\d{4}|\d{4}.*Present', line).group(0) if re.search(r'\d{4}.*\d{4}|\d{4}.*Present', line) else "Dates",
+                            "achievements": []
+                        })
+                     else:
+                        # Probably company name if title was just set
+                        sections["experience"][-1]["company"] = line
+                elif is_bullet and sections["experience"]:
+                    sections["experience"][-1]["achievements"].append(re.sub(r'^[•\-\*]\s+', '', line))
+            
+            elif current_section == "skills":
+                # Split by commas or bullets
+                parts = re.split(r'[,•\-\*|]', line)
+                for p in parts:
+                    clean_p = p.strip()
+                    if clean_p and len(clean_p) > 2:
+                        sections["skills"]["Technical"].append(clean_p)
+            
+            elif current_section == "education":
+                if re.search(r'\d{4}', line) or "university" in line_lower or "college" in line_lower or "degree" in line_lower:
+                    sections["education"].append({
+                        "degree": line,
+                        "institution": "University Name",
+                        "year": re.search(r'\d{4}', line).group(0) if re.search(r'\d{4}', line) else "Year"
+                    })
+            
+            elif current_section == "certifications":
+                sections["certifications"].append(line)
+        
+        # 3. Fallbacks and Improvements
+        if not sections["experience"]:
+            # If no sections found, just take a chunk of text
+            sections["experience"] = [{
+                "title": "Professional Role",
                 "company": "Your Company",
-                "location": "City, State",
-                "dates": "MMM YYYY - Present",
-                "achievements": mock_achievements if mock_achievements else ["Expanded system functionality by 20%", "Optimized core workflows"]
-            }
-        ]
-
-        # 4. Extract Skills (simple word list)
-        words = set(re.split(r'\W+', resume_text.lower()))
-        common_tech = {'python', 'javascript', 'java', 'react', 'flask', 'docker', 'aws', 'sql', 'git', 'nosql', 'api', 'cloud'}
-        found_tech = sorted(list(words.intersection(common_tech)))
+                "achievements": [l for l in lines[5:15] if len(l) > 30]
+            }]
+        
+        # Apply AI suggestions to the first experience entry if available
+        sugs = suggestions_data.get("suggestions", [])
+        if sections["experience"] and sugs:
+            # Add improved bullets to the first job for demonstration
+            improved_bullets = [s["after"] for s in sugs[:3]]
+            sections["experience"][0]["achievements"] = improved_bullets + sections["experience"][0]["achievements"][:2]
 
         return {
-            "contact": contact,
-            "summary": "Result-oriented professional with experience in technical execution and complex problem-solving. This summary has been automatically tailored to align with the provided job description.",
-            "experience": experience,
-            "skills": {
-                "Technical": found_tech if found_tech else ["Extracted Skill 1", "Extracted Skill 2"],
-                "Tools": ["Relevant Tool 1", "Relevant Tool 2"]
+            "contact": {
+                "name": name,
+                "email": email_match.group(0) if email_match else "your.email@example.com",
+                "phone": phone_match.group(0) if phone_match else "+1 (555) 123-4567",
+                "location": "City, State"
             },
-            "education": [
-                {
-                    "degree": "Your Degree",
-                    "institution": "Your University",
-                    "year": "YYYY"
-                }
-            ],
-            "certifications": [
-                "Relevant Professional Certification"
-            ],
+            "summary": "Result-oriented professional with experience in technical execution and complex problem-solving. This summary has been automatically tailored to align with the provided job description.",
+            "experience": sections["experience"][:5], # Limit to 5 jobs
+            "skills": {
+                "Technical": sections["skills"]["Technical"][:15],
+                "Core Competencies": ["Strategy", "Operations", "Management"]
+            },
+            "education": sections["education"][:2],
+            "certifications": sections["certifications"][:3],
             "_is_demo": True,
-            "_demo_reason": "API Quota Exceeded - Smart Mock Applied"
+            "_demo_reason": "API Quota Exceeded - Deep Mock Applied"
         }
     
     def create_docx(self, resume_data, output_path):
